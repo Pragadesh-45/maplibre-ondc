@@ -1,81 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Display buildings in 3D</title>
-  <meta property="og:description" content="Use extrusions to display buildings' height in 3D." />
-  <meta charset='utf-8'>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.css' />
-  <script src='https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.js'></script>
-  <style>
-      body { margin: 0; padding: 0; }
-      html, body, #map { height: 100%; }
-  </style>
+    <title>Show drawn polygon area</title>
+    <meta property="og:description" content="Use mapbox-gl-draw to draw a polygon and Turf.js to calculate its area in square meters." />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.js'></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+    </style>
 </head>
 <body>
+<style>
+    .calculation-box {
+        height: 75px;
+        width: 150px;
+        position: absolute;
+        bottom: 40px;
+        left: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        text-align: center;
+    }
+
+    p {
+        font-family: 'Open Sans';
+        margin: 0;
+        font-size: 13px;
+    }
+</style>
+
+<script src="https://www.unpkg.com/turf@3.0.14/turf.min.js"></script>
+<script src="https://www.unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.js"></script>
+<link
+    rel="stylesheet"
+    href="https://www.unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.css"
+    type="text/css"
+/>
 <div id="map"></div>
+<div class="calculation-box">
+    <p>Draw a polygon using the draw tools.</p>
+    <div id="calculated-area"></div>
+</div>
+
 <script>
-  const MAPTILER_KEY = 'I8Bg5FZVlq2Ps2mnsfP9';
-  const map = new maplibregl.Map({
-      style: `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER_KEY}`,
-      center: [77.0060, 11.0168],
-      zoom: 15.5,
-      pitch: 45,
-      bearing: -17.6,
-      container: 'map',
-      antialias: true
-  });
+    MapboxDraw.constants.classes.CONTROL_BASE  = 'maplibregl-ctrl';
+    MapboxDraw.constants.classes.CONTROL_PREFIX = 'maplibregl-ctrl-';
+    MapboxDraw.constants.classes.CONTROL_GROUP = 'maplibregl-ctrl-group';
 
-  // The 'building' layer in the streets vector source contains building-height
-  // data from OpenStreetMap.
-  map.on('load', () => {
-      // Insert the layer beneath any symbol layer.
-      const layers = map.getStyle().layers;
+    
 
-      let labelLayerId;
-      for (let i = 0; i < layers.length; i++) {
-          if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
-              labelLayerId = layers[i].id;
-              break;
-          }
-      }
+    const map = new maplibregl.Map({
+        container: 'map', // container id
+        style:
+            'https://api.maptiler.com/maps/streets/style.json?key=I8Bg5FZVlq2Ps2mnsfP9', //hosted style id
+        center:  [77.0060, 11.0168], // Coimbatore
+        zoom: 12 // starting zoom
+    });
 
-      map.addSource('openmaptiles', {
-          url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`,
-          type: 'vector',
-      });
+    const draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {
+            polygon: true,
+            trash: true
+        }
+    });
+    map.addControl(draw);
 
-      map.addLayer(
-          {
-              'id': '3d-buildings',
-              'source': 'openmaptiles',
-              'source-layer': 'building',
-              'type': 'fill-extrusion',
-              'minzoom': 15,
-              'paint': {
-                  'fill-extrusion-color': [
-                      'interpolate',
-                      ['linear'],
-                      ['get', 'render_height'], 0, 'lightgray', 200, 'royalblue', 400, 'lightblue'
-                  ],
-                  'fill-extrusion-height': [
-                      'interpolate',
-                      ['linear'],
-                      ['zoom'],
-                      15,
-                      0,
-                      16,
-                      ['get', 'render_height']
-                  ],
-                  'fill-extrusion-base': ['case',
-                      ['>=', ['get', 'zoom'], 16],
-                      ['get', 'render_min_height'], 0
-                  ]
-              }
-          },
-          labelLayerId
-      );
-  });
+    map.on('draw.create', updateArea);
+    map.on('draw.delete', updateArea);
+    map.on('draw.update', updateArea);
+
+    function updateArea(e) {
+        const data = draw.getAll();
+        const answer = document.getElementById('calculated-area');
+        if (data.features.length > 0) {
+            const area = turf.area(data);
+            // restrict to area to 2 decimal points
+            const roundedArea = Math.round(area * 100) / 100;
+            answer.innerHTML =
+                `<p><strong>${
+                    roundedArea
+                }</strong></p><p>square meters</p>`;
+        } else {
+            answer.innerHTML = '';
+            if (e.type !== 'draw.delete')
+                alert('Use the draw tools to draw a polygon!');
+        }
+    }
 </script>
 </body>
 </html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Fly to a location</title>
+    <meta property="og:description" content="Use flyTo to smoothly interpolate between locations." />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.js'></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+    </style>
+</head>
+<body>
+<style>
+    #fly {
+        display: block;
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translate(-50%);
+        width: 50%;
+        height: 40px;
+        padding: 10px;
+        border: none;
+        border-radius: 3px;
+        font-size: 12px;
+        text-align: center;
+        color: #fff;
+        background: #007bff; /* Change background color to blue */
+
+    }
+</style>
+<div id="map"></div>
+<br />
+<button id="fly">Click this to Deliver a package from Jammu & Kashmir to Kanyakumari</button>
+<script>
+
+    const apiKey = "AAPK506f7bed5d1646b29a6f6f836e653826n3bMAzujLk6d3hWNUuGJsCYNsjaDRkOYk90vCebRa0AqcjetONWOg2UCkl4YM6rW";
+
+    const basemapEnum = "arcgis/navigation";
+
+    const map = new maplibregl.Map({
+        container: 'map',
+        style:
+            'https://api.maptiler.com/maps/streets/style.json?key=I8Bg5FZVlq2Ps2mnsfP9', //hosted style id
+        center: [77.561755, 35.131141],
+        zoom: 4
+    });
+
+    document.getElementById('fly').addEventListener('click', () => {
+        // Fly to a random location by offsetting the point -74.50, 40
+        // by up to 5 degrees.
+        map.flyTo({
+            center: [77.551289, 8.077246],
+            zoom: 15,
+            essential: true // this animation is considered essential with respect to prefers-reduced-motion
+        });
+    });
+
+    const marker1 = new maplibregl.Marker({ color: 'green' }) // You can set marker color here
+        .setLngLat([77.561755, 35.131141])
+        .addTo(map);
+
+    // Marker for northern tip (Disputed area near Karakoram Range)
+    const marker2 = new maplibregl.Marker({ color: 'red' }) // You can set marker color here
+        .setLngLat([77.551289, 8.077246])
+        .addTo(map);
+
+</script>
+</body>
+</html>

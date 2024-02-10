@@ -56,7 +56,7 @@
 
   <div id="directions">Click on the map to create a start and end for the route.</div>
 
-  <!-- <div id="distance"></div> -->
+  <div id="distance" style="font-size: 20px;n height: 200px; width: 200px; align-items: center; display: flex; justify-content: center;"></div>
 
 
   <script>
@@ -204,6 +204,7 @@
         endCoords = coordinates;
         currentStep = "start";
       }
+
 
       if (startCoords && endCoords) {
         updateRoute(startCoords, endCoords);

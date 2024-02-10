@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src=https://unpkg.com/maplibre-gl@3.2.1/dist/maplibre-gl.js></script>
+    <link href=https://unpkg.com/maplibre-gl@3.2.1/dist/maplibre-gl.css rel="stylesheet" />
+
+    <script src="https://unpkg.com/@esri/arcgis-rest-request@4.0.0/dist/bundled/request.umd.js"></script>
+    <script src="https://unpkg.com/@esri/arcgis-rest-geocoding@4.0.0/dist/bundled/geocoding.umd.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        color: #323232;
+      }
+    </style>
+
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+  </body>
+
+  <script>
+
+    const apiKey = "AAPK506f7bed5d1646b29a6f6f836e653826n3bMAzujLk6d3hWNUuGJsCYNsjaDRkOYk90vCebRa0AqcjetONWOg2UCkl4YM6rW";
+
+    const basemapEnum = "arcgis/navigation";
+
+    const map = new maplibregl.Map({
+      container: "map",
+      style: `https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/${basemapEnum}?token=${apiKey}`,
+      zoom: 12, // starting zoom
+
+      center: [77.0060, 11.0168] // Coimbatore
+
+    });
+
+    map.on("click", (e) => {
+      const coords = e.lngLat.toArray();
+
+      const authentication = arcgisRest.ApiKeyManager.fromKey(apiKey);
+
+      arcgisRest
+        .reverseGeocode(coords, {
+          authentication
+        })
+        .then((result) => {
+
+          const lngLat = [result.location.x, result.location.y];
+
+          const label = `${result.address.LongLabel}<br>${lngLat[0].toLocaleString()}, ${lngLat[1].toLocaleString()}`;
+
+          new maplibregl.Popup().setLngLat(lngLat).setHTML(label).addTo(map);
+
+        })
+
+        .catch((error) => {
+          alert("There was a problem using the reverse geocode service. See the console for details.");
+          console.error(error);
+        });
+
+    });
+
+  </script>
+
+</html>
